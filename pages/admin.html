@@ -368,6 +368,17 @@
   </div>
 </div>
 
+<!-- PAYMENTS -->
+<div class="section" id="section-payments">
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">Subscription Payments</div>
+      <div class="table-count" id="payments-count"></div>
+    </div>
+    <div id="payments-container"></div>
+  </div>
+</div>
+
 <script>
   const { createClient } = supabase;
   const _supabase = createClient(
@@ -384,6 +395,7 @@
   var allCustomers = [];
   var allOrders = [];
   var allProducts = [];
+  var allPayments = [];
   var currentSection = 'overview';
 
   async function init() {
@@ -411,17 +423,19 @@
     var customersRes = await _supabase.from('customers').select('*').order('created_at', { ascending: false });
     var ordersRes = await _supabase.from('orders').select('*, stores(name), customers(full_name)').order('created_at', { ascending: false });
     var productsRes = await _supabase.from('products').select('*').order('created_at', { ascending: false });
-
+    var paymentsRes = await _supabase.from('subscription_payments').select('*').order('created_at', { ascending: false });
     allStores = storesRes.data || [];
     allCustomers = customersRes.data || [];
     allOrders = ordersRes.data || [];
     allProducts = productsRes.data || [];
+    allPayments = paymentsRes.data || [];
 
     renderOverview();
     renderStores();
     renderUsers();
     renderOrders();
     renderProducts();
+    renderPayments();
   }
 
   function renderOverview() {
@@ -590,6 +604,47 @@
     await _supabase.from('stores').update({ is_active: !currentStatus }).eq('id', storeId);
     await loadAllData();
   }
+
+  function renderPayments() {
+  document.getElementById('payments-count').textContent = allPayments.length + ' payments';
+  var container = document.getElementById('payments-container');
+  if (allPayments.length === 0) { container.innerHTML = '<div class="empty-state">No payments yet</div>'; return; }
+
+  var rows = allPayments.map(function(p) {
+    var approveBtn = p.status !== 'approved'
+      ? '<button class="action-btn activate" onclick="approvePayment(\'' + p.id + '\')">Approve</button>'
+      : '';
+    var rejectBtn = p.status !== 'rejected'
+      ? '<button class="action-btn deactivate" onclick="rejectPayment(\'' + p.id + '\')">Reject</button>'
+      : '';
+    var screenshot = p.screenshot_url
+      ? '<a href="' + p.screenshot_url + '" target="_blank" style="color:var(--green);font-size:12px">View Screenshot</a>'
+      : '—';
+    return '<tr>' +
+      '<td><div class="store-name-cell">' + (p.full_name || '—') + '</div><div style="font-size:12px;color:var(--gray)">' + (p.email || '—') + '</div></td>' +
+      '<td><span class="mono">' + (p.trx_id || '—') + '</span></td>' +
+      '<td>' + screenshot + '</td>' +
+      '<td style="font-family:\'Bebas Neue\',sans-serif;font-size:16px;color:var(--green)">PKR ' + Number(p.amount).toLocaleString('en-PK') + '</td>' +
+      '<td><span class="status-badge ' + p.status + '">' + p.status + '</span></td>' +
+      '<td style="font-size:12px;color:var(--gray)">' + new Date(p.created_at).toLocaleDateString('en-PK') + '</td>' +
+      '<td style="display:flex;gap:6px">' + approveBtn + rejectBtn + '</td>' +
+      '</tr>';
+  }).join('');
+
+  container.innerHTML = '<table class="data-table"><thead><tr><th>Store Owner</th><th>TRX ID</th><th>Screenshot</th><th>Amount</th><th>Status</th><th>Date</th><th>Action</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+async function approvePayment(id) {
+  if (!confirm('Approve this payment?')) return;
+  await _supabase.from('subscription_payments').update({ status: 'approved' }).eq('id', id);
+  await loadAllData();
+}
+
+async function rejectPayment(id) {
+  if (!confirm('Reject this payment?')) return;
+  await _supabase.from('subscription_payments').update({ status: 'rejected' }).eq('id', id);
+  await loadAllData();
+}
 
   function showSection(name) {
     document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
