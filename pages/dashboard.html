@@ -916,21 +916,27 @@
       return;
     }
 
+   try {
+  const { data: store } = await _supabase
+    .from('stores')
+    .select('id')
+    .eq('owner_id', session.user.id)
+    .single();
+
+  if (!store) {
     const { data: payment } = await _supabase
-  .from('subscription_payments')
-  .select('status')
-  .eq('user_id', session.user.id)
-  .single();
+      .from('subscription_payments')
+      .select('status')
+      .eq('user_id', session.user.id)
+      .single();
 
-const { data: store } = await _supabase
-  .from('stores')
-  .select('id')
-  .eq('owner_id', session.user.id)
-  .single();
-
-if (!store && (!payment || payment.status !== 'approved')) {
-  window.location.href = 'payment.html';
-  return;
+    if (!payment || payment.status !== 'approved') {
+      window.location.href = 'payment.html';
+      return;
+    }
+  }
+} catch(e) {
+  // continue loading dashboard
 }
 
     const user = session.user;
