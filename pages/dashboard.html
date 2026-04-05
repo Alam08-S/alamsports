@@ -922,7 +922,13 @@
   .eq('user_id', session.user.id)
   .single();
 
-if (!payment || payment.status !== 'approved') {
+const { data: store } = await _supabase
+  .from('stores')
+  .select('id')
+  .eq('owner_id', session.user.id)
+  .single();
+
+if (!store && (!payment || payment.status !== 'approved')) {
   window.location.href = 'payment.html';
   return;
 }

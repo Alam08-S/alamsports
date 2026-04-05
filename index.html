@@ -446,13 +446,24 @@
       if (!email || !password) { showMsg('Please fill in all fields.', 'error'); btn.disabled = false; return; }
       const { error } = await _supabase.auth.signInWithPassword({ email, password });
       if (error) { showMsg(error.message, 'error'); btn.disabled = false; return; }
-      const { data: payment } = await _supabase
+      const userId = (await _supabase.auth.getUser()).data.user.id;
+
+const { data: payment } = await _supabase
   .from('subscription_payments')
   .select('status')
-  .eq('user_id', (await _supabase.auth.getUser()).data.user.id)
+  .eq('user_id', userId)
   .single();
 
-if (!payment || payment.status !== 'approved') {
+const { data: store } = await _supabase
+  .from('stores')
+  .select('id')
+  .eq('owner_id', userId)
+  .single();
+
+if (store) {
+  showMsg('Logged in! Redirecting...', 'success');
+  setTimeout(() => window.location.href = 'pages/dashboard.html', 1000);
+} else if (!payment || payment.status !== 'approved') {
   showMsg('Logged in! Redirecting to payment...', 'success');
   setTimeout(() => window.location.href = 'pages/payment.html', 1000);
 } else {
