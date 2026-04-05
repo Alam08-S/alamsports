@@ -446,8 +446,19 @@
       if (!email || !password) { showMsg('Please fill in all fields.', 'error'); btn.disabled = false; return; }
       const { error } = await _supabase.auth.signInWithPassword({ email, password });
       if (error) { showMsg(error.message, 'error'); btn.disabled = false; return; }
-      showMsg('Logged in! Redirecting...', 'success');
-      setTimeout(() => window.location.href = 'pages/dashboard.html', 1000);
+      const { data: payment } = await _supabase
+  .from('subscription_payments')
+  .select('status')
+  .eq('user_id', (await _supabase.auth.getUser()).data.user.id)
+  .single();
+
+if (!payment || payment.status !== 'approved') {
+  showMsg('Logged in! Redirecting to payment...', 'success');
+  setTimeout(() => window.location.href = 'pages/payment.html', 1000);
+} else {
+  showMsg('Logged in! Redirecting...', 'success');
+  setTimeout(() => window.location.href = 'pages/dashboard.html', 1000);
+}
     } else {
       const name = document.getElementById('signup-name').value.trim();
       const email = document.getElementById('signup-email').value.trim();
@@ -456,8 +467,8 @@
       if (password.length < 6) { showMsg('Password must be at least 6 characters.', 'error'); btn.disabled = false; return; }
       const { error } = await _supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
       if (error) { showMsg(error.message, 'error'); btn.disabled = false; return; }
-    showMsg('Account created! Redirecting to payment...', 'success');
-setTimeout(() => window.location.href = 'pages/payment.html', 1500);
+    showMsg('Account created! Please check your email and confirm your account, then come back to login.', 'success');
+btn.textContent = 'Check your email ✓';
     }
     btn.disabled = false;
   }
