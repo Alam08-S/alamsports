@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Products — AlamSports</title>
+  <title>Products — Harkiagh</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -633,7 +633,7 @@
   );
 
   const CLOUDINARY_CLOUD = 'dzpxkndcz';
-  const CLOUDINARY_PRESET = 'alamsports_logos';
+  const CLOUDINARY_PRESET = 'Harkiagh_logos';
 
   let currentUser = null;
   let currentStore = null;
@@ -643,7 +643,7 @@
 
   async function init() {
     const { data: { session } } = await _supabase.auth.getSession();
-    if (!session) { window.location.href = '/alamsports/index.html'; return; }
+    if (!session) { window.location.href = '/Harkiagh/index.html'; return; }
 
     currentUser = session.user;
     const name = currentUser.user_metadata?.full_name || currentUser.email;
@@ -915,7 +915,7 @@ const statusBadge = p.status === 'approved'
 
   async function handleLogout() {
     await _supabase.auth.signOut();
-    window.location.href = '/alamsports/index.html';
+    window.location.href = '/Harkiagh/index.html';
   }
 
   init();
