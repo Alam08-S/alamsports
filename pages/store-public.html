@@ -404,6 +404,8 @@
     <div class="modal-body">
       <div class="msg" id="checkout-msg"></div>
       <div class="order-summary" id="order-summary"></div>
+      <div class="field"><label>Full Name</label><input type="text" id="guest-name" placeholder="Your full name" /></div>
+      <div class="field"><label>Phone Number</label><input type="text" id="guest-phone" placeholder="0300-1234567" /></div>
       <div class="field"><label>Delivery Address</label><textarea id="checkout-address" placeholder="Your full delivery address..."></textarea></div>
       <div class="field"><label>Order Note (optional)</label><input type="text" id="checkout-note" placeholder="Any special instructions..." /></div>
     </div>
@@ -813,7 +815,7 @@ async function handleLogout() {
   // ── CHECKOUT ──
   function openCheckout() {
     if (cart.length === 0) return;
-    if (!currentUser) { openAuthModal('login'); return; }
+    // guest checkout allowed, no login required
 
     toggleCart();
 
@@ -841,21 +843,26 @@ async function handleLogout() {
 async function placeOrder() {
     const address = document.getElementById('checkout-address').value.trim();
     const note = document.getElementById('checkout-note').value.trim();
+    const guestName = document.getElementById('guest-name').value.trim();
+    const guestPhone = document.getElementById('guest-phone').value.trim();
 
-    if (!address) {
+    if (!guestName) {
       const el = document.getElementById('checkout-msg');
-      el.textContent = 'Please enter a delivery address.';
+      el.textContent = 'Please enter your name.';
       el.className = 'msg error';
       return;
     }
 
-    console.log('currentUser:', currentUser);
-    console.log('currentCustomer:', currentCustomer);
-    console.log('cart:', cart);
-
-    if (!currentCustomer) {
+    if (!guestPhone) {
       const el = document.getElementById('checkout-msg');
-      el.textContent = 'Customer profile not found. Please log out and log back in.';
+      el.textContent = 'Please enter your phone number.';
+      el.className = 'msg error';
+      return;
+    }
+
+    if (!address) {
+      const el = document.getElementById('checkout-msg');
+      el.textContent = 'Please enter a delivery address.';
       el.className = 'msg error';
       return;
     }
@@ -868,7 +875,9 @@ async function placeOrder() {
 
     const { data: order, error } = await _supabase.from('orders').insert({
       store_id: currentStore.id,
-      customer_id: currentCustomer.id,
+      customer_id: currentCustomer ? currentCustomer.id : null,
+      guest_name: guestName,
+      guest_phone: guestPhone,
       status: 'pending',
       total_amount: total,
       delivery_address: address,
